@@ -38,7 +38,7 @@
         <ul class="list-group">
           <li v-for="report in reports" :key="report" class="list-group-item d-flex justify-content-between align-items-center">
             <span><i class="bi bi-file-earmark-bar-graph me-2"></i> {{ report }}</span>
-            <a :href="getDownloadUrl(report)" target="_blank" class="btn btn-sm btn-outline-primary">
+            <a :href="getReportUrl(report)" target="_blank" class="btn btn-sm btn-outline-primary">
               View Report
             </a>
           </li>
@@ -68,45 +68,50 @@ export default {
   },
   methods: {
     async fetchData() {
-      // 1. Get Stats
-      const statsRes = await api.get('/admin/dashboard');
-      this.stats = statsRes.data;
+      try {
+        // 1. Get Stats
+        const statsRes = await api.get('/admin/dashboard');
+        this.stats = statsRes.data;
 
-      // 2. Get List of Reports (Reusing the student export route logic but for Admin)
-      // Since we didn't make a specific admin route for this, we can cheat slightly 
-      // and assume the backend serves files from /uploads/
-      // Ideally, you would add a route like /admin/reports to list files.
-      // For now, let's trigger generation to see one.
-      this.fetchReports();
+        // 2. Get list of reports from backend
+        await this.fetchReports();
+      } catch (err) {
+        console.error('Failed to load dashboard data', err);
+      }
     },
+
     async fetchReports() {
-       // Note: To make this robust, you should add a route in backend/routes/admin.py:
-       // @admin_bp.route('/reports') -> returns glob.glob('uploads/Monthly_Report_*.html')
-       // For this demo, we will rely on the user triggering it.
+      try {
+        // ✅ Calls the real backend route now
+        const res = await api.get('/admin/reports');
+        this.reports = res.data.reports;
+      } catch (err) {
+        console.error('Failed to fetch reports', err);
+      }
     },
+
     async triggerReport() {
       this.generating = true;
       try {
-        // We trigger the celery task via a new admin endpoint or just simulate it
-        // Since we don't have a direct "trigger report" API endpoint yet, 
-        // We will assume the task runs. In a real demo, you'd add:
-        // await api.post('/admin/trigger-report');
-        alert("Report generation started! (Check backend console for 'Monthly report generated')");
-        
-        // Simulating the file appearance for UI demo
-        const date = new Date();
-        const filename = `Monthly_Report_${date.getFullYear()}_${(date.getMonth()+1).toString().padStart(2, '0')}.html`;
-        if (!this.reports.includes(filename)) {
-            this.reports.unshift(filename);
-        }
+        // ✅ Calls the real backend route to trigger Celery task
+        await api.post('/admin/reports/generate');
+        alert('Report generation started! It will appear in the list shortly.');
+
+        // Wait a moment then refresh the list
+        setTimeout(() => {
+          this.fetchReports();
+        }, 3000);
       } catch (err) {
-        alert("Failed to trigger report");
+        alert('Failed to trigger report generation');
+        console.error(err);
       } finally {
         this.generating = false;
       }
     },
-    getDownloadUrl(filename) {
-      return `http://localhost:5000/uploads/${filename}`;
+
+    getReportUrl(filename) {
+      // ✅ Uses the authenticated admin route instead of /uploads/ directly
+      return `http://localhost:5000/api/admin/reports/${filename}`;
     }
   }
 };

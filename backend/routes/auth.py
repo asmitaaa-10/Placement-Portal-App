@@ -41,6 +41,10 @@ def login():
         additional_claims={'role': user.role}
     )
 
+    if user.role == 'Admin':
+        from backend.tasks.monthly_report import generate_monthly_report
+        generate_monthly_report.delay()
+
     return jsonify({"access_token": access_token, "role": user.role}), 200
 
 
@@ -48,7 +52,7 @@ def login():
 def register_student():
     data = request.get_json()
     
-    required_fields = ['username', 'password', 'branch', 'cgpa', 'passing_year']
+    required_fields = ['username', 'password','email', 'branch', 'cgpa', 'passing_year']
     if not all(field in data for field in required_fields):
         return jsonify({"msg": "Missing required fields"}), 400
 
@@ -60,10 +64,15 @@ def register_student():
 
     if User.query.filter_by(username=data['username']).first():
         return jsonify({"msg": "Username already exists"}), 409
+    
+    if User.query.filter_by(email=data['email']).first():
+        return jsonify({"msg": "Email already exists"}), 409
+
 
     try:
         new_user = User(
             username=data['username'],
+            email=data['email'],
             password=generate_password_hash(data['password']),
             role='Student'
         )
@@ -90,16 +99,20 @@ def register_student():
 def register_company():
     data = request.get_json()
     
-    required_fields = ['username', 'password', 'company_name', 'hr_contact']
+    required_fields = ['username', 'password','email', 'company_name', 'hr_contact']
     if not all(field in data for field in required_fields):
         return jsonify({"msg": "Missing required fields"}), 400
 
     if User.query.filter_by(username=data['username']).first():
         return jsonify({"msg": "Username already exists"}), 409
+    
+    if User.query.filter_by(email=data['email']).first():
+        return jsonify({"msg": "Email already exists"}), 409
 
     try:
         new_user = User(
             username=data['username'],
+            email=data['email'],
             password=generate_password_hash(data['password']),
             role='Company'
         )

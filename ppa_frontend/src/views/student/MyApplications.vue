@@ -11,7 +11,7 @@
       </button>
     </div>
 
-    <div v-if="exports.length > 0" class="alert alert-info shadow-sm d-flex flex-column">
+    <div class="alert alert-info shadow-sm d-flex flex-column">
       <div class="d-flex align-items-center mb-2">
         <i class="bi bi-file-earmark-arrow-down-fill fs-4 me-2"></i>
         <strong>Your Reports are Ready:</strong>
@@ -45,7 +45,7 @@
             <tbody>
               <tr v-for="app in applications" :key="app.application_id">
                 <td class="ps-4 fw-bold text-dark">{{ app.job_title }}</td>
-                <td class="text-muted">{{ app.company_name || 'View Details' }}</td>
+                <td class="text-muted">{{ app.company_name }}</td>
                 <td>{{ new Date(app.application_date).toLocaleDateString() }}</td>
                 <td>
                   <span :class="['badge rounded-pill px-3 py-2', getStatusClass(app.status)]">
@@ -91,17 +91,20 @@ export default {
         // Fetch available exports
         const exportRes = await api.get('/student/exports');
         this.exports = exportRes.data.files;
+      
       } catch(err) {
         console.error(err);
       }
     },
+    
+    
     async exportCSV() {
       this.exporting = true;
       try {
-        const response = await api.post(
+        const response = await api.get(
           '/student/export-history',
           {},
-          { responseType: 'blob' }   // VERY IMPORTANT
+          { responseType: 'blob' }   
         );
 
         const blob = new Blob([response.data], { type: 'text/csv' });
@@ -137,6 +140,7 @@ export default {
     }
   }
 };
+
 </script>
 
 <style scoped>

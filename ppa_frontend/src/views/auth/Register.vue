@@ -15,6 +15,12 @@
               <label class="form-label">Username</label>
               <input v-model="form.username" type="text" class="form-control" required />
             </div>
+
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input v-model="form.email" type="email" class="form-control" required />
+            </div>
+
             <div class="mb-3">
               <label class="form-label">Password</label>
               <input v-model="form.password" type="password" class="form-control" required />
@@ -66,7 +72,7 @@ export default {
     return {
       role: 'Student',
       form: {
-        username: '', password: '', branch: '', cgpa: null, 
+        username: '', email: '', password: '', branch: '', cgpa: null, 
         passing_year: null, company_name: '', hr_contact: '', website: ''
       }
     };

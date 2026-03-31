@@ -1,5 +1,7 @@
 import os
 from datetime import timedelta
+from celery.schedules import crontab
+
 
 class Config:
     # Basic Flask Config
@@ -37,7 +39,27 @@ class Config:
 
     # Celery Config
     CELERY_CONFIG = {
-        "broker_url": "redis://localhost:6379/1",
-        "result_backend": "redis://localhost:6379/2",
-        "broker_connection_retry_on_startup": True
+
+    # Redis connections
+    "broker_url": "redis://localhost:6379/1",
+    "result_backend": "redis://localhost:6379/2",
+    "broker_connection_retry_on_startup": True,
+
+    # timezone for scheduling
+    "timezone": "Asia/Kolkata",
+
+
+    # monthly scheduled task
+    "beat_schedule": {
+        "monthly-placement-report": {
+            "task": "generate_monthly_report",
+
+            # runs 9:00 AM on 1st day of every month
+            "schedule": crontab(
+                minute=0,
+                hour=9,
+                day_of_month=1
+            ),
+        },
+    }
     }

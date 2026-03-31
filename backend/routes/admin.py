@@ -1,4 +1,5 @@
-from flask import Blueprint, request, jsonify, current_app
+import os
+from flask import Blueprint, request, jsonify, current_app, send_from_directory
 from flask_mail import Message
 from flask_jwt_extended import get_jwt_identity
 from datetime import datetime
@@ -10,11 +11,9 @@ from backend.extensions import cache, mail
 admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 
 # SHOULD BE REMOVED LATER 
-
 @admin_bp.route('/debug-mail', methods=['GET'])
 @admin_required
 def debug_mail():
-    """Debug email configuration and SMTP connection"""
     admin_user_id = get_jwt_identity()
     admin_user = User.query.get(admin_user_id)
     
@@ -33,20 +32,17 @@ def debug_mail():
     }
     
     try:
-        # Test SMTP connection
         with mail.connect() as conn:
             debug_info["smtp_status"] = "Connected successfully"
         return jsonify(debug_info), 200
     except Exception as e:
         debug_info["smtp_error"] = str(e)
         return jsonify(debug_info), 500
-    
-# Note: The above debug route is for testing email configuration and should be removed or protected in production.
+
 
 @admin_bp.route('/dashboard', methods=['GET'])
 @admin_required
 def get_dashboard_stats():
-    # We remove cache briefly to ensure you see live updates during testing
     total_students = StudentProfile.query.count()
     total_companies = CompanyProfile.query.count()
     total_drives = PlacementDrive.query.count()
@@ -57,6 +53,7 @@ def get_dashboard_stats():
         "total_placement_drives": total_drives
     }), 200
 
+
 @admin_bp.route('/companies/<int:company_id>/approve', methods=['POST'])
 @admin_required
 def approve_company(company_id):
@@ -64,6 +61,7 @@ def approve_company(company_id):
     company.approval_status = 'Approved'
     db.session.commit()
     return jsonify({"msg": "Company approved successfully"}), 200
+
 
 @admin_bp.route('/companies/<int:company_id>/reject', methods=['POST'])
 @admin_required
@@ -73,6 +71,7 @@ def reject_company(company_id):
     db.session.commit()
     return jsonify({"msg": "Company rejected successfully"}), 200
 
+
 @admin_bp.route('/drives/<int:drive_id>/approve', methods=['POST'])
 @admin_required
 def approve_drive(drive_id):
@@ -81,6 +80,7 @@ def approve_drive(drive_id):
     db.session.commit()
     return jsonify({"msg": "Placement drive approved successfully"}), 200
 
+
 @admin_bp.route('/drives/<int:drive_id>/reject', methods=['POST'])
 @admin_required
 def reject_drive(drive_id):
@@ -88,6 +88,7 @@ def reject_drive(drive_id):
     drive.status = 'Closed'
     db.session.commit()
     return jsonify({"msg": "Placement drive rejected successfully"}), 200
+
 
 @admin_bp.route('/search/students', methods=['GET'])
 @admin_required
@@ -113,6 +114,7 @@ def search_students():
         })
         
     return jsonify({"students": students_data}), 200
+
 
 @admin_bp.route('/search/companies', methods=['GET'])
 @admin_required
@@ -141,6 +143,7 @@ def search_companies():
         
     return jsonify({"companies": companies_data}), 200
 
+
 @admin_bp.route('/search/drives', methods=['GET'])
 @admin_required
 def search_drives():
@@ -153,9 +156,7 @@ def search_drives():
         
     drives_data = []
     for d in drives:
-        # FIX: Manually fetch company using company_id to avoid crashing if relationship is missing
         company = CompanyProfile.query.get(d.company_id)
-        
         drives_data.append({
             "drive_id": d.id,
             "job_title": d.job_title,
@@ -164,6 +165,7 @@ def search_drives():
         })
     
     return jsonify({"drives": drives_data}), 200
+
 
 @admin_bp.route('/users/<int:user_id>/blacklist', methods=['POST'])
 @admin_required
@@ -177,6 +179,7 @@ def blacklist_user(user_id):
     db.session.commit()
     return jsonify({"msg": f"{user.role} blacklisted successfully"}), 200
 
+
 @admin_bp.route('/users/<int:user_id>/reactivate', methods=['POST'])
 @admin_required
 def reactivate_user(user_id):
@@ -185,6 +188,7 @@ def reactivate_user(user_id):
     user.blacklist_flag = False
     db.session.commit()
     return jsonify({"msg": f"{user.role} reactivated successfully"}), 200
+
 
 @admin_bp.route('/send-test-email', methods=['POST'])
 @admin_required
@@ -221,3 +225,37 @@ def send_test_email():
     except Exception as e:
         return jsonify({"msg": "Failed to send test email", "error": str(e)}), 500
 
+
+# ─────────────────────────────────────────
+# REPORT ROUTES
+# ─────────────────────────────────────────
+
+@admin_bp.route('/reports', methods=['GET'])
+@admin_required
+def list_reports():
+    """List all saved monthly HTML reports."""
+    uploads_dir = os.path.join(current_app.config['BASE_DIR'], 'uploads')
+    os.makedirs(uploads_dir, exist_ok=True)
+
+    files = sorted(
+        [f for f in os.listdir(uploads_dir)
+         if f.startswith('Monthly_Report_') and f.endswith('.html')],
+        reverse=True  # newest first
+    )
+    return jsonify({"reports": files}), 200
+
+
+@admin_bp.route('/reports/generate', methods=['POST'])
+@admin_required
+def trigger_report():
+    """Manually trigger monthly report generation as a Celery task."""
+    from backend.tasks.monthly_report import generate_monthly_report
+    task = generate_monthly_report.delay()
+    return jsonify({"msg": "Report generation started", "task_id": task.id}), 202
+
+
+@admin_bp.route('/reports/<filename>', methods=['GET'])
+def view_report(filename):
+    """Serve a saved HTML report file."""
+    uploads_dir = os.path.join(current_app.config['BASE_DIR'], 'uploads')
+    return send_from_directory(uploads_dir, filename)

@@ -1,6 +1,6 @@
 import os
 import glob
-from flask import Blueprint, request, jsonify, current_app, send_from_directory
+from flask import Blueprint, request, jsonify, current_app, send_from_directory, Response
 from flask_login import current_user
 from werkzeug.utils import secure_filename
 from flask_jwt_extended import get_jwt_identity
@@ -9,6 +9,10 @@ from backend.models import db, StudentProfile, PlacementDrive, Application, Comp
 from backend.utils.decorators import student_required
 from backend.tasks import export_applications_csv
 from backend.extensions import cache
+
+import csv
+from io import StringIO
+from backend.utils.mail import sendMail
 
 student_bp = Blueprint('student', __name__, url_prefix='/api/student')
 
@@ -142,22 +146,121 @@ def get_student_applications():
         applications_data.append({
             "application_id": app.id,
             "job_title": app.drive.job_title if app.drive else None,
+            "company_name": app.drive.company_profile.company_name,
             "status": app.status,
             "application_date": app.application_date.isoformat()
         })
     return jsonify({"applications": applications_data}), 200
 
-@student_bp.route('/export-history', methods=['POST'])
-@student_required
-def trigger_history_export():
-    student = get_current_student()
-    student_email = 'asmita.pal1010@gmail.com'  # Replace with student.user.email if you have email field in User model
-    export_applications_csv.delay(student.id, student.user.username, student_email)
-    return jsonify({
-        "msg": "✅ Export started! Check your email - 'Your application export is ready'",
-    }), 202
+# @student_bp.route('/export-history', methods=['POST'])
+# @student_required
+# def export_application_history():
+#     try:
+#         # Get current student
+#         student = get_current_student()
 
-    #return jsonify({"msg": "Batch job triggered. Please wait a few seconds and refresh to download."}), 202
+#         # Get student email
+#         student_email = 'asmita.pal1010@gmail.com'   # or student.user.email if available
+
+#         file_path = "application_history_export.csv"
+
+#         # Get applications of the student
+#         applications = Application.query.filter_by(student_id=student.id).all()
+
+#         # Write CSV file
+#         with open(file_path, 'w', newline='') as csv_file:
+#             fieldnames = ['application_id', 'company', 'role', 'status', 'applied_on']
+#             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+#             writer.writeheader()
+            
+#             for app in applications:
+#                 writer.writerow({
+#                 'application_id': app.id,
+#                 'company': app.drive.company.company_name if app.drive and app.drive.company else "Unknown",
+#                 'role': app.drive.job_title if app.drive else None,
+#                 'status': app.status,
+#                 'applied_on': app.application_date.isoformat() if app.application_date else None
+#                 })
+
+#         return jsonify({
+#             "msg": "Export completed! Check your email."
+#         }), 200
+#     except Exception as e:
+#         print(e)
+#         return jsonify({
+#             "msg": "Export failed"
+#         }), 500
+
+# @student_bp.route('/export-history', methods=['POST'])
+# @student_required
+# def trigger_history_export():
+#     student = get_current_student()
+#     # Call CSV export synchronously
+#     export_applications_csv(student.id, student.user.username, student.user.email)
+#     return jsonify({"msg": "✅ Export completed!"}), 200
+
+# @student_bp.route('/export-history', methods=['GET'])
+# @student_required
+# def export_history():
+#     student = get_current_student()
+
+#     # Use StringIO so we can write CSV to memory
+#     output = StringIO()
+#     writer = csv.DictWriter(output, fieldnames=['application_id','company','role','status','applied_on'])
+#     writer.writeheader()
+
+#     for app in student.applications:  # or Application.query.filter_by(student_id=student.id)
+#         writer.writerow({
+#             'application_id': app.id,
+#             'company': app.drive.company.company_name if app.drive and app.drive.company else "Unknown",
+#             'role': app.drive.job_title if app.drive else None,
+#             'status': app.status,
+#             'applied_on': app.application_date.isoformat() if app.application_date else None
+#         })
+
+#     output.seek(0)
+    
+#     return Response(
+#         output,
+#         mimetype='text/csv',
+#         headers={"Content-Disposition": f"attachment;filename=application_history_{student.user.username}.csv"}
+#     )
+
+
+@student_bp.route('/export-history', methods=['GET'])
+@student_required
+def export_history():
+    student = get_current_student()
+
+    # Use StringIO to write CSV to memory
+    output = StringIO()
+    writer = csv.DictWriter(output, fieldnames=['application_id','company','role','status','applied_on'])
+    writer.writeheader()
+
+    # Safe defaults for username
+    username = getattr(getattr(student, 'user', None), 'username', 'student')
+
+    for app in getattr(student, 'applications', []):
+        drive = getattr(app, 'drive', None)
+        company_name = getattr(getattr(drive, 'company_profile', None), 'company_name', 'Unknown')
+        job_title = getattr(drive, 'job_title', None)
+
+        writer.writerow({
+            'application_id': getattr(app, 'id', None),
+            'company': company_name,
+            'role': job_title,
+            'status': getattr(app, 'status', None),
+            'applied_on': getattr(getattr(app, 'application_date', None), 'isoformat', lambda: None)()
+        })
+
+    output.seek(0)
+    print(output)
+    return Response(
+        output,
+        mimetype='text/csv',
+        headers={"Content-Disposition": f"attachment;filename=application_history_{username}.csv"}
+    )
+
 
 @student_bp.route('/exports', methods=['GET'])
 @student_required
