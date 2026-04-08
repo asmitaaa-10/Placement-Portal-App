@@ -100,7 +100,7 @@ export default {
     async generateOffer(appId) {
       try {
         const res = await api.get(`/company/applications/${appId}/offer-letter`);
-        // Simple download trigger
+        // download trigger
         const blob = new Blob([res.data.offer_letter], { type: 'text/plain' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
