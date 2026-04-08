@@ -21,7 +21,7 @@ import MyApplications from '../views/student/MyApplications.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/', component: CoverPage },        // ✅ Cover page is now the landing page
+    { path: '/', component: CoverPage },       
     { path: '/login', component: Login },
     { path: '/register', component: Register },
     
