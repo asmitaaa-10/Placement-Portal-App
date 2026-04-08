@@ -11,22 +11,6 @@
       </button>
     </div>
 
-    <div class="alert alert-info shadow-sm d-flex flex-column">
-      <div class="d-flex align-items-center mb-2">
-        <i class="bi bi-file-earmark-arrow-down-fill fs-4 me-2"></i>
-        <strong>Your Reports are Ready:</strong>
-      </div>
-      <div class="d-flex flex-wrap gap-2">
-        <a v-for="file in exports" 
-           :key="file" 
-           :href="getDownloadUrl(file)" 
-           target="_blank" 
-           class="btn btn-sm btn-light border text-primary">
-           <i class="bi bi-download me-1"></i> {{ file }}
-        </a>
-      </div>
-    </div>
-
     <div class="card shadow-sm border-0">
       <div class="card-header bg-white py-3">
         <h5 class="mb-0 text-secondary">My Applications</h5>
@@ -75,7 +59,6 @@ export default {
   data() {
     return {
       applications: [],
-      exports: [],
       exporting: false
     };
   },
@@ -87,24 +70,18 @@ export default {
       try {
         const appRes = await api.get('/student/applications');
         this.applications = appRes.data.applications;
-        
-        // Fetch available exports
-        const exportRes = await api.get('/student/exports');
-        this.exports = exportRes.data.files;
-      
       } catch(err) {
         console.error(err);
       }
     },
-    
-    
+
     async exportCSV() {
       this.exporting = true;
       try {
         const response = await api.get(
           '/student/export-history',
           {},
-          { responseType: 'blob' }   
+          { responseType: 'blob' }
         );
 
         const blob = new Blob([response.data], { type: 'text/csv' });
@@ -126,9 +103,6 @@ export default {
       }
     },
 
-    getDownloadUrl(filename) {
-      return `http://localhost:5000/uploads/${filename}`;
-    },
     getStatusClass(status) {
       switch(status) {
         case 'Selected': return 'bg-success';
@@ -140,16 +114,14 @@ export default {
     }
   }
 };
-
 </script>
 
 <style scoped>
-/* Optional: Add some spacing for better visual hierarchy */
 .container {
   max-width: 1000px;
 }
 .card {
   border-radius: 10px;
-  overflow: hidden; /* Ensures table corners follow card radius */
+  overflow: hidden;
 }
 </style>

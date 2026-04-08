@@ -13,7 +13,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # JWT Config
-    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'placement-portal-2026-secret')
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'placement-portal-app-2026-secret-key')
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
     JWT_TOKEN_LOCATION = ['headers']
     ENV = os.environ.get("FLASK_ENV", "development")
@@ -24,10 +24,10 @@ class Config:
     MAIL_PORT = 587
     MAIL_USE_TLS = True
     MAIL_USE_SSL = False
-    MAIL_USERNAME = 'asmita.pal1010@gmail.com'  # Your sender email
-    MAIL_PASSWORD = 'njzl fyli tzti idkt'  # Your app password
-    MAIL_DEFAULT_SENDER = 'asmita.pal1010@gmail.com'  # Same as username
-    MAIL_SUPPRESS_SEND = False  # Set to True to disable sending (testing only)
+    MAIL_USERNAME = 'asmita.pal1010@gmail.com'  # sender email
+    MAIL_PASSWORD = 'njzl fyli tzti idkt'  # app password
+    MAIL_DEFAULT_SENDER = 'asmita.pal1010@gmail.com'  # username
+    MAIL_SUPPRESS_SEND = False  # Set to True to disable sending 
 
     # Redis Cache Config
     CACHE_TYPE = "RedisCache"
@@ -54,7 +54,7 @@ class Config:
         "monthly-placement-report": {
             "task": "generate_monthly_report",
 
-            # runs 9:00 AM on 1st day of every month
+            # 9:00 AM on 1st day of every month
             "schedule": crontab(
                 minute=0,
                 hour=9,

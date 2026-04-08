@@ -73,7 +73,7 @@ def get_approved_drives():
         if search_query and search_query not in drive.job_title.lower():
             continue
 
-        # 3. FILTER: Check Eligibility (The Logic You Needed)
+        # 3. FILTER: Check Eligibility 
         # If drive has a branch requirement, student must match it
         if drive.eligibility_branch and drive.eligibility_branch.lower() != student.branch.lower():
             continue
@@ -122,7 +122,6 @@ def apply_to_drive(drive_id):
     if not drive or drive.status != 'Approved':
         return jsonify({"msg": "Drive not found or not approved"}), 404
 
-    # Double-check eligibility on Apply (Security Best Practice)
     if drive.eligibility_branch and drive.eligibility_branch.lower() != student.branch.lower():
         return jsonify({"msg": "Branch eligibility not met"}), 403
     if drive.eligibility_cgpa is not None and student.cgpa < drive.eligibility_cgpa:
@@ -152,80 +151,6 @@ def get_student_applications():
         })
     return jsonify({"applications": applications_data}), 200
 
-# @student_bp.route('/export-history', methods=['POST'])
-# @student_required
-# def export_application_history():
-#     try:
-#         # Get current student
-#         student = get_current_student()
-
-#         # Get student email
-#         student_email = 'asmita.pal1010@gmail.com'   # or student.user.email if available
-
-#         file_path = "application_history_export.csv"
-
-#         # Get applications of the student
-#         applications = Application.query.filter_by(student_id=student.id).all()
-
-#         # Write CSV file
-#         with open(file_path, 'w', newline='') as csv_file:
-#             fieldnames = ['application_id', 'company', 'role', 'status', 'applied_on']
-#             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-#             writer.writeheader()
-            
-#             for app in applications:
-#                 writer.writerow({
-#                 'application_id': app.id,
-#                 'company': app.drive.company.company_name if app.drive and app.drive.company else "Unknown",
-#                 'role': app.drive.job_title if app.drive else None,
-#                 'status': app.status,
-#                 'applied_on': app.application_date.isoformat() if app.application_date else None
-#                 })
-
-#         return jsonify({
-#             "msg": "Export completed! Check your email."
-#         }), 200
-#     except Exception as e:
-#         print(e)
-#         return jsonify({
-#             "msg": "Export failed"
-#         }), 500
-
-# @student_bp.route('/export-history', methods=['POST'])
-# @student_required
-# def trigger_history_export():
-#     student = get_current_student()
-#     # Call CSV export synchronously
-#     export_applications_csv(student.id, student.user.username, student.user.email)
-#     return jsonify({"msg": "✅ Export completed!"}), 200
-
-# @student_bp.route('/export-history', methods=['GET'])
-# @student_required
-# def export_history():
-#     student = get_current_student()
-
-#     # Use StringIO so we can write CSV to memory
-#     output = StringIO()
-#     writer = csv.DictWriter(output, fieldnames=['application_id','company','role','status','applied_on'])
-#     writer.writeheader()
-
-#     for app in student.applications:  # or Application.query.filter_by(student_id=student.id)
-#         writer.writerow({
-#             'application_id': app.id,
-#             'company': app.drive.company.company_name if app.drive and app.drive.company else "Unknown",
-#             'role': app.drive.job_title if app.drive else None,
-#             'status': app.status,
-#             'applied_on': app.application_date.isoformat() if app.application_date else None
-#         })
-
-#     output.seek(0)
-    
-#     return Response(
-#         output,
-#         mimetype='text/csv',
-#         headers={"Content-Disposition": f"attachment;filename=application_history_{student.user.username}.csv"}
-#     )
-
 
 @student_bp.route('/export-history', methods=['GET'])
 @student_required
@@ -237,7 +162,7 @@ def export_history():
     writer = csv.DictWriter(output, fieldnames=['application_id','company','role','status','applied_on'])
     writer.writeheader()
 
-    # Safe defaults for username
+    
     username = getattr(getattr(student, 'user', None), 'username', 'student')
 
     for app in getattr(student, 'applications', []):

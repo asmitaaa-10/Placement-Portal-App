@@ -40,7 +40,6 @@ def create_app(config_class=Config):
 
     register_error_handlers(app)
 
-    # Route to serve uploaded files (resumes, reports, etc.)
     @app.route('/uploads/<path:filename>')
     def serve_uploaded_file(filename):
         upload_dir = os.path.join(app.config['BASE_DIR'], 'uploads')
@@ -50,7 +49,6 @@ def create_app(config_class=Config):
         db.create_all()
         create_admin_if_not_exists()
 
-        # ✅ Import tasks here so Celery registers them with the app context
         from backend.tasks import generate_monthly_report, export_applications_csv
 
     if not app.debug:

@@ -58,9 +58,7 @@ export default {
     };
   },
   async created() {
-    // We assume there's a route to get current profile info or we infer from stored data
-    // For now, we leave fields blank for user to input new values if endpoints require it
-    // Or simpler: Just allow overwriting
+
   },
   methods: {
     async updateProfile() {

@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import CoverPage from '../views/CoverPage.vue'
 import Login from '../views/auth/Login.vue'
 import Register from '../views/auth/Register.vue'
 
@@ -20,60 +21,24 @@ import MyApplications from '../views/student/MyApplications.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/', redirect: '/login' },
+    { path: '/', component: CoverPage },        // ✅ Cover page is now the landing page
     { path: '/login', component: Login },
     { path: '/register', component: Register },
     
     // Admin Routes
-    { 
-      path: '/admin', 
-      component: AdminDashboard, 
-      meta: { requiresAuth: true, role: 'Admin' } 
-    },
-    { 
-      path: '/admin/users', 
-      component: AdminUsers, 
-      meta: { requiresAuth: true, role: 'Admin' } 
-    },
-    { 
-      path: '/admin/reports', 
-      component: AdminReports, 
-      meta: { requiresAuth: true, role: 'Admin' } 
-    },
+    { path: '/admin', component: AdminDashboard, meta: { requiresAuth: true, role: 'Admin' } },
+    { path: '/admin/users', component: AdminUsers, meta: { requiresAuth: true, role: 'Admin' } },
+    { path: '/admin/reports', component: AdminReports, meta: { requiresAuth: true, role: 'Admin' } },
 
     // Company Routes
-    { 
-      path: '/company', 
-      component: CompanyDashboard, 
-      meta: { requiresAuth: true, role: 'Company' } 
-    },
-    { 
-      path: '/company/create-drive', 
-      component: CreateDrive, 
-      meta: { requiresAuth: true, role: 'Company' } 
-    },
-    { 
-      path: '/company/drive/:drive_id/applications', 
-      component: DriveApplications, 
-      meta: { requiresAuth: true, role: 'Company' } 
-    },
+    { path: '/company', component: CompanyDashboard, meta: { requiresAuth: true, role: 'Company' } },
+    { path: '/company/create-drive', component: CreateDrive, meta: { requiresAuth: true, role: 'Company' } },
+    { path: '/company/drive/:drive_id/applications', component: DriveApplications, meta: { requiresAuth: true, role: 'Company' } },
 
     // Student Routes
-    { 
-      path: '/student', 
-      component: StudentDashboard, 
-      meta: { requiresAuth: true, role: 'Student' } 
-    },
-    { 
-      path: '/student/profile', 
-      component: StudentProfile, 
-      meta: { requiresAuth: true, role: 'Student' } 
-    },
-    { 
-      path: '/student/my-applications', 
-      component: MyApplications, 
-      meta: { requiresAuth: true, role: 'Student' } 
-    },
+    { path: '/student', component: StudentDashboard, meta: { requiresAuth: true, role: 'Student' } },
+    { path: '/student/profile', component: StudentProfile, meta: { requiresAuth: true, role: 'Student' } },
+    { path: '/student/my-applications', component: MyApplications, meta: { requiresAuth: true, role: 'Student' } },
   ]
 })
 
@@ -87,7 +52,7 @@ router.beforeEach((to, from, next) => {
       next('/login');
     } else if (to.meta.role && to.meta.role !== role) {
       alert('Unauthorized Access');
-      next('/login'); // Redirect if role doesn't match
+      next('/login');
     } else {
       next();
     }

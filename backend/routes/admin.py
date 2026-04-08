@@ -10,7 +10,6 @@ from backend.extensions import cache, mail
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 
-# SHOULD BE REMOVED LATER 
 @admin_bp.route('/debug-mail', methods=['GET'])
 @admin_required
 def debug_mail():

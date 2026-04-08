@@ -82,7 +82,7 @@ export default {
 
     async fetchReports() {
       try {
-        // ✅ Calls the real backend route now
+        // Calls backend route
         const res = await api.get('/admin/reports');
         this.reports = res.data.reports;
       } catch (err) {
@@ -93,11 +93,11 @@ export default {
     async triggerReport() {
       this.generating = true;
       try {
-        // ✅ Calls the real backend route to trigger Celery task
+        // Calls backend route to trigger Celery task
         await api.post('/admin/reports/generate');
         alert('Report generation started! It will appear in the list shortly.');
 
-        // Wait a moment then refresh the list
+ 
         setTimeout(() => {
           this.fetchReports();
         }, 3000);
@@ -110,7 +110,6 @@ export default {
     },
 
     getReportUrl(filename) {
-      // ✅ Uses the authenticated admin route instead of /uploads/ directly
       return `http://localhost:5000/api/admin/reports/${filename}`;
     }
   }

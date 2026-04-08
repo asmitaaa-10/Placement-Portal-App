@@ -103,7 +103,7 @@ export default {
     },
     openEditModal(drive) {
       this.editForm = { ...drive };
-      // Format date for input field
+      // Format date for input
       this.editForm.application_deadline = new Date(drive.application_deadline).toISOString().split('T')[0];
       this.showModal = true;
     },

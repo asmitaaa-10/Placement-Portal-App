@@ -83,7 +83,7 @@ def generate_monthly_report():
 
     students_selected = db.session.query(func.count(Application.id))\
         .filter(
-            Application.status == "Selected",   # ✅ fixed
+            Application.status == "Selected",   
             Application.updated_at.between(start_date, end_date)
         ).scalar()
 
@@ -102,7 +102,7 @@ def generate_monthly_report():
         f.write(html_content)
 
     subject = f"Placement Report - {start_date.strftime('%B %Y')}"
-    admin = User.query.filter_by(role="Admin").first()  # ✅ capital A to match your model
+    admin = User.query.filter_by(role="Admin").first()  
     if admin:
         sendMail(
             to=admin.email,

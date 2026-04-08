@@ -21,7 +21,6 @@ def role_required(required_role):
             if user.blacklist_flag:
                 return jsonify({"msg": "Account blacklisted"}), 403
                 
-            # Verify claim role matches database role and the required role for the route
             if claims.get('role') != user.role or user.role != required_role:
                 return jsonify({"msg": f"Access restricted to {required_role} role or role mismatch"}), 403
                 

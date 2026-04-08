@@ -1,7 +1,11 @@
 <template>
-  <Navbar />
-  <div class="container mt-4">
-    <router-view />
+  <div>
+    <Navbar />
+    
+    <div class="container mt-4">
+      <router-view />
+    </div>
+    
   </div>
 </template>
 
@@ -16,5 +20,5 @@ export default {
 </script>
 
 <style>
-/* Global styles if needed, but we rely on Bootstrap */
+/* Global styles if needed */
 </style>

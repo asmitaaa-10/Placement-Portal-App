@@ -65,7 +65,7 @@ def modify_drive(drive_id):
         db.session.commit()
         return jsonify({"msg": "Placement drive deleted successfully"}), 200
 
-    # Edit Logic
+    
     if drive.status != 'Pending':
         return jsonify({"msg": "Only 'Pending' drives can be modified."}), 403
 
@@ -119,14 +119,14 @@ def get_drive_applications(drive_id):
     applications_data = []
     for app in applications:
         student = app.student_profile
-        # Extract filename from the full path for the frontend link
+
         resume_filename = os.path.basename(student.resume_path) if student.resume_path else None
         
         applications_data.append({
             "application_id": app.id,
             "student_username": student.user.username,
             "status": app.status,
-            "resume_filename": resume_filename, # Added for Resume View
+            "resume_filename": resume_filename, 
             "interview_date": app.interview_date.isoformat() if app.interview_date else None
         })
     return jsonify({"applications": applications_data}), 200

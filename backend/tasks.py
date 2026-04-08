@@ -35,7 +35,7 @@ def daily_deadline_reminders():
         for drive in closing_drives:
             message += f"- {drive.job_title} (Deadline: {drive.application_deadline.strftime('%Y-%m-%d')})\n"
         
-        # Simulating Webhook/Email alert as required
+        # Simulating Email alert
         send_mock_email(to=student.username, subject="Upcoming Placement Deadlines", body=message)
         
     return "Daily reminders sent successfully."
@@ -51,7 +51,7 @@ def monthly_activity_report():
     total_applied = Application.query.filter(Application.application_date >= first_day_of_month).count()
     total_selected = Application.query.filter(Application.application_date >= first_day_of_month, Application.status == 'Selected').count()
 
-    # 2. Generate HTML Content (Requirement: Well-designed HTML/PDF Report)
+    # 2. HTML Report Content
     html_content = f"""
     <html>
     <head>
@@ -79,14 +79,14 @@ def monthly_activity_report():
     </html>
     """
     
-    # 3. Save as a physical file so Admin can view/download it
+    # 3. Save as file so Admin can view/download it
     filename = f"Monthly_Report_{now.strftime('%Y_%m')}.html"
     filepath = os.path.join(current_app.config['BASE_DIR'], 'uploads', filename)
     
     with open(filepath, 'w') as f:
         f.write(html_content)
 
-    # 4. Notify Admin (Mock Email)
+    # 4. Notify Admin 
     admin = User.query.filter_by(role='Admin').first()
     if admin:
         send_mock_email(to=admin.username, subject="Monthly Report Generated", body=f"Report saved at: {filename}")
@@ -95,21 +95,19 @@ def monthly_activity_report():
 
 @celery_app.task
 def export_applications_csv(student_id, username, student_email=None):
-    """✅ FIXED VERSION - Works 100%"""
     
-    # 1. CREATE FLASK APP CONTEXT (CRITICAL!)
+    
+    
     from backend.app import create_app
     app = create_app()
     
-    with app.app_context():  # ← THIS LINE FIXES EVERYTHING
-        from backend.models import Application, CompanyProfile  # ✅ Correct imports
+    with app.app_context():  
+        from backend.models import Application, CompanyProfile  
         
-        # 2. Ensure uploads folder exists
         upload_dir = os.path.join(app.config['BASE_DIR'], 'uploads')
         os.makedirs(upload_dir, exist_ok=True)
         
        
-        # 3. Generate CSV
         applications = Application.query.filter_by(student_id=student_id).all()
 
         filename = f"export_{username}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
@@ -118,20 +116,16 @@ def export_applications_csv(student_id, username, student_email=None):
         with open(filepath, 'w', newline='', encoding='utf-8') as file:
             writer = csv.writer(file)
     
-            # Updated Header (matches UI exactly)
             writer.writerow(["Job Role", "Company", "Date Applied", "Status"])
     
             for app in applications:
-                # Get Job Title
                 drive_title = app.drive.job_title if app.drive else "N/A"
                 
-                # Get Company Name
                 company_name = "Unknown"
                 if app.drive and app.drive.company_id:
                     company = CompanyProfile.query.get(app.drive.company_id)
                     company_name = company.company_name if company else "Unknown"
         
-                # Write Row
                 writer.writerow([
                     drive_title,
                     company_name,
@@ -139,9 +133,8 @@ def export_applications_csv(student_id, username, student_email=None):
                     app.status
                 ])
 
-        print(f"✅ CSV SAVED: {filepath}")
+        print(f"CSV SAVED: {filepath}")
 
-        # 4. Send Email
         from backend.extensions import mail
         from flask_mail import Message
 

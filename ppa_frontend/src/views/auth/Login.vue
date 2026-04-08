@@ -49,7 +49,6 @@ export default {
         else if (response.data.role === 'Company') this.$router.push('/company');
         else this.$router.push('/student');
         
-        // Force refresh for navbar update
         setTimeout(() => { window.location.reload(); }, 100);
       } catch (error) {
         alert(error.response?.data?.msg || 'Login failed');
